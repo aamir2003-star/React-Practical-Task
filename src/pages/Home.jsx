@@ -13,11 +13,7 @@ const Home = () => {
   return (
 
     <>
-    <nav className='w-full border-b-1 px-4 py-3'>
-      <h1 className='text-3xl font-semibold'>
-      Registration App
-      </h1>
-    </nav>
+
 
     <div className='flex flex-col mt-[15%] items-center justify-center gap-3'>
       <h1 className='text-4xl font-bold'>Welcome to the Portal </h1>

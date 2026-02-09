@@ -1,8 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormError from '../components/FormError';
+import { StateManagerContext } from '../context/StateContext';
 
-const Stage1 = ({ role, setRole, setCompletedStage, setProgress }) => {
+const Stage1 = () => {
+  const {role, setRole, setCompletedStage, setProgress} = useContext(StateManagerContext)
   const [error, setError] = useState('');
   const selectRef = useRef();
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ const Stage1 = ({ role, setRole, setCompletedStage, setProgress }) => {
       selectRef.current.focus();
       return;
     }
-    setProgress(33);
+    setProgress(66);
     setCompletedStage((p) => ({ ...p, stage1: true }));
     navigate('/register/stage-2');
   };

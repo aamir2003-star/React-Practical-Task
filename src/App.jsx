@@ -1,13 +1,13 @@
-// src/App.jsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-import RegisterRoutes from "./routes/RegisterRoutes";
+
+import Header from './components/Header';
+import IndexRoutes from './routes/indexRoutes';
 
 export default function App() {
   return (
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/register/*" element={<RegisterRoutes />} />
-      </Routes>
+    <>
+    <Header />
+    <IndexRoutes />
+    </>
+   
   );
 }
