@@ -29,7 +29,7 @@ const Teacher = () => {
   };
   const handleExperience = (e) => {
     if (e.target.value < 0 || e.target.value > 40) {
-      alert('Years of experince should be in positive ');
+      alert('Years of experience should be positive');
       secondInvalid.current.value = '';
     } else {
       setFormData({ ...formData, exp: e.target.value });
@@ -58,7 +58,7 @@ const Teacher = () => {
         onClick={(e) => {
           submit(e);
         }}
-        className={`w-full bg-orange-500 text-white py-2 rounded-md delay-100`}
+        className={`w-full bg-orange-500 text-white py-2 rounded-md delay-100 hover:bg-orange-600 cursor-pointer`}
       >
         Next
       </button>

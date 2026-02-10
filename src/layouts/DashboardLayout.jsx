@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Outlet } from 'react-router-dom'
 import { ProgressBar, StageIndicator } from '../pages'
+import { StateManagerContext } from '../context/StateContext'
 
-const DashboardLayout = ({progress}) => {
+const DashboardLayout = () => {
+  const {progress}  = useContext(StateManagerContext)
   return (
    <div className="min-h-screen flex flex-col items-center pt-10">
       <h1 className=" text-2xl mb-10">Registration App</h1>

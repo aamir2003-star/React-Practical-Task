@@ -51,7 +51,7 @@ export default class Stage3 extends Component {
         <button
           disabled={!this.state.email || !this.state.agree}
           onClick={this.submit}
-          className={`w-full py-2 rounded-md text-white ${this.state.email && this.state.agree ? 'bg-blue-500 cursor-pointer' : 'bg-gray-400 cursor-not-allowed'} `}
+          className={`w-full py-2 rounded-md text-white ${this.state.email && this.state.agree ? 'bg-blue-500 cursor-pointer hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'} `}
         >
           Submit
         </button>

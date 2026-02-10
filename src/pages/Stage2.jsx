@@ -7,7 +7,6 @@ import { useContext } from 'react';
 
 const Stage2 = () => {
   const { role } = useContext(StateManagerContext);
-
   return (
     <>
       <h2 className="font-semibold mb-4 capitalize">

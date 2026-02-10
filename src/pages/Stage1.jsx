@@ -31,7 +31,7 @@ const Stage1 = () => {
         value={role}
         onChange={(e) => setRole(e.target.value)}
       >
-          <option >Select Your role</option>
+          <option >Select your role</option>
         <option value="student">Student</option>
         <option value="teacher">Teacher</option>
         <option value="professor">Professor</option>
@@ -42,7 +42,7 @@ const Stage1 = () => {
         next(e)
       }}
      
-      className='w-full bg-red-500 text-white py-2 rounded-lg'
+      className='w-full bg-red-500 text-white py-2 rounded-lg cursor-pointer hover:bg-red-600'
       >
         Next
       </button>

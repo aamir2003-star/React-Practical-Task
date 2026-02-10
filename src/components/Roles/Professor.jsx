@@ -49,7 +49,7 @@ const Professor = () => {
         onClick={(e) => {
           submit(e);
         }}
-        className={`w-full bg-orange-500 text-white py-2 rounded-md delay-100`}
+        className={`w-full bg-orange-500 text-white py-2 rounded-md delay-100 hover:bg-orange-600 cursor-pointer`}
       >
         Next
       </button>
