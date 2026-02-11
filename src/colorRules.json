@@ -1,0 +1,22 @@
+[
+  {
+    "min": 0,
+    "max": 32,
+    "color": "bg-red-500"
+  },
+  {
+    "min": 33,
+    "max": 65,
+    "color": "bg-orange-500"
+  },
+  {
+    "min": 66,
+    "max": 99,
+    "color": "bg-blue-500"
+  },
+  {
+    "min": 100,
+    "max": 100,
+    "color": "bg-green-500"
+  }
+]

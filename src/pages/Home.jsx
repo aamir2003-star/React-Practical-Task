@@ -9,9 +9,7 @@ const Home = () => {
     navigate('/register/stage-1');
   };
   const handleSuccess = ()=>{
-    setRole('')
-    setProgress(33)
-    navigate('/')
+    window.location.reload()
   }
   return (
     <>

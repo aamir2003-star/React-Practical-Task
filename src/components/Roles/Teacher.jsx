@@ -7,8 +7,13 @@ const Teacher = () => {
   const firstInvalid = useRef();
   const secondInvalid = useRef();
   const navigate = useNavigate();
-  const { setFormData, formData, setCompletedStage, setProgress } =
-    useContext(StateManagerContext);
+  const {
+    setFormData,
+    formData,
+    setCompletedStage,
+    setProgress,
+    setFieldCompleted,
+  } = useContext(StateManagerContext);
   const submit = (e) => {
     e.preventDefault();
     if (
@@ -21,9 +26,12 @@ const Teacher = () => {
     } else if (secondInvalid.current.value === '') {
       secondInvalid.current.focus();
       return;
+    } else if (formData.subject && formData.subject.length < 2) {
+      alert('Subject must be at least 2 characters long');
+      firstInvalid.current.focus();
+      return;
     } else {
       setCompletedStage((p) => ({ ...p, stage2: true }));
-      setProgress(99);
       navigate('/register/stage-3');
     }
   };
@@ -31,10 +39,27 @@ const Teacher = () => {
     if (e.target.value < 0 || e.target.value > 40) {
       alert('Years of experience should be positive');
       secondInvalid.current.value = '';
+      setFieldCompleted((prev) => ({
+        ...prev,
+        stage2: [prev.stage2[0], false],
+      }));
     } else {
       setFormData({ ...formData, exp: e.target.value });
+      setFieldCompleted((prev) => ({
+        ...prev,
+        stage2: [prev.stage2[0], true],
+      }));
     }
   };
+
+  const handleSubject = (e) => {
+    setFormData({ ...formData, subject: e.target.value });
+    setFieldCompleted((prev) => ({
+      ...prev,
+      stage2: [e.target.value.trim() ? true : false, prev.stage2[1]],
+    }));
+  };
+
   return (
     <>
       <form action="" onSubmit={submit}>
@@ -42,9 +67,7 @@ const Teacher = () => {
           ref={firstInvalid}
           placeholder="Subject"
           className="w-full border px-3 py-2 rounded-md mb-2"
-          onChange={(e) =>
-            setFormData({ ...formData, subject: e.target.value })
-          }
+          onChange={handleSubject}
         />
         <input
           type="number"

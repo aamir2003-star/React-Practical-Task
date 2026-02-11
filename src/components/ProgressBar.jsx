@@ -1,18 +1,10 @@
-import { useContext } from "react";
-import { StateManagerContext } from "../context/StateContext";
+import { useContext } from 'react';
+import { StateManagerContext } from '../context/StateContext';
 
-const colors = [
-  { min: 0, max: 33, color: "bg-red-500" },
-  { min: 34, max: 66, color: "bg-orange-500" },
-  { min: 67, max: 99, color: "bg-blue-500" },
-  { min: 100, max: 100, color: "bg-green-500" },
-];
-
-export default function ProgressBar() {
-  const {progress} = useContext(StateManagerContext)
+export default function ProgressBar({ progress, colorRules }) {
   const barColor =
-    colors.find((c) => progress >= c.min && progress <= c.max)?.color ||
-    "bg-gray-400";
+    colorRules.find((c) => progress >= c.min && progress <= c.max)?.color ||
+    'bg-gray-400';
 
   return (
     <div className="mt-2">

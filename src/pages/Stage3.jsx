@@ -19,9 +19,26 @@ export default class Stage3 extends Component {
       return;
     }
     setCompletedStage((p) => ({ ...p, stage3: true }));
-    setProgress(100);
     setFormData((p) => ({ ...p, email: this.state.email }));
     this.setState({ done: true });
+  };
+
+  handleEmailChange = (e) => {
+    this.setState({ email: e.target.value });
+    const { setFieldCompleted } = this.context;
+    setFieldCompleted((prev) => ({
+      ...prev,
+      stage3: [this.emailRegex.test(e.target.value), prev.stage3[1]],
+    }));
+  };
+
+  handleAgreeChange = (e) => {
+    this.setState({ agree: e.target.checked });
+    const { setFieldCompleted } = this.context;
+    setFieldCompleted((prev) => ({
+      ...prev,
+      stage3: [prev.stage3[0], e.target.checked],
+    }));
   };
 
   render() {
@@ -37,15 +54,10 @@ export default class Stage3 extends Component {
           type="email"
           placeholder="Email"
           className="w-full border px-3 py-2 rounded-md mb-3"
-          onChange={(e) => this.setState({ email: e.target.value })}
+          onChange={this.handleEmailChange}
         />
         <label className="flex gap-2 text-sm mb-4">
-          <input
-            type="checkbox"
-            onChange={(e) => {
-              this.setState({ agree: e.target.value });
-            }}
-          />
+          <input type="checkbox" onChange={this.handleAgreeChange} />
           Agreement
         </label>
         <button
