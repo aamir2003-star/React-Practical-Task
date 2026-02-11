@@ -136,7 +136,7 @@ Color rules defined in `colorRules.json`:
 ### Validation and Error Handling
 
 - **Stage 1**: Requires role selection before proceeding
-- **Stage 2**: 
+- **Stage 2**:
   - Validates required fields and data types (e.g., grade 1-12, experience >0)
   - Text fields (school name, subject, department, research area) must be at least 2 characters long
 - **Stage 3**: Email regex validation + agreement checkbox required
@@ -144,9 +144,351 @@ Color rules defined in `colorRules.json`:
 
 ### Navigation and Routing
 
-- Uses React Router for client-side routing
-- Protected navigation: Can only proceed to next stage when current is valid
-- Success page redirects automatically to home
+The app uses React Router for client-side routing with comprehensive stage protection:
+
+- **Routing Structure** (`IndexRoutes.jsx` → `StageRouting.jsx`):
+  - `/` → Home page (landing page)
+  - `/register/stage-1` → Role selection stage
+  - `/register/stage-2` → Role-specific details
+  - `/register/stage-3` → Email and agreement
+  - `/register/success` → Success confirmation
+  - Protected navigation ensures users can only access stages sequentially
+  - Any invalid URL redirects to the appropriate stage
+
+- **Stage Locking Logic**:
+  - Each stage checks if the previous stage is completed before rendering
+  - `completedStage` object tracks which stages are done
+  - Direct URL access to locked stages redirects to earliest incomplete stage
+  - Completed stages auto-redirect to next stage to prevent re-editing
+  - Browser back button on completed stages redirects to Stage 1
+  - Uses `popstate` event listener to prevent browser history manipulation
+  - All stage completions use `navigate(..., { replace: true })` to prevent history buildup
+
+- **Protected Navigation Flow**:
+  - Stage 1 → Direct access allowed (entry point)
+  - Stage 2 → Requires Stage 1 completion
+  - Stage 3 → Requires Stage 2 completion
+  - Success → Requires Stage 3 completion
+
+### Routing Structure
+
+Routes defined in `src/routes/`:
+
+**IndexRoutes.jsx** - Main route configuration:
+
+```jsx
+<Route path="/" element={<Home />} />
+<Route path="/register/*" element={<StageRouting />} />
+<Route path="/*" element={<NotFoundPage />} />
+```
+
+**StageRouting.jsx** - Protected stage routes:
+
+```jsx
+<Route element={<DashboardLayout />}>
+  <Route path="stage-1" element={<Stage1 />} />
+  <Route
+    path="stage-2"
+    element={
+      completedStage.stage1 ? <Stage2 /> : <Navigate to="/register/stage-1" />
+    }
+  />
+  <Route
+    path="stage-3"
+    element={
+      completedStage.stage2 ? <Stage3 /> : <Navigate to="/register/stage-1" />
+    }
+  />
+  <Route
+    path="success"
+    element={
+      completedStage.stage3 ? <Success /> : <Navigate to="/register/stage-1" />
+    }
+  />
+</Route>
+```
+
+Each stage has conditional rendering that checks completion status before rendering.
+
+### State Flow
+
+**State Management Architecture** (`StateContext.jsx`):
+
+```javascript
+// Global state structure
+{
+  role: '',                           // 'student' | 'teacher' | 'professor'
+  formData: {},                       // { school, grade } | { subject, exp } | { dept, research, email }
+  completedStage: {                   // Track which stages are locked
+    stage1: false,
+    stage2: false,
+    stage3: false
+  },
+  fieldCompleted: {                   // Track individual field completion per stage
+    stage1: [false],                  // 1 field (role selection)
+    stage2: [false, false],           // 2 fields (role-specific data)
+    stage3: [false, false]            // 2 fields (email, agreement)
+  },
+  progress: 0,                        // 0-100%
+  colorRules: [...]                   // Progress bar color configuration
+}
+```
+
+**State Flow Diagram**:
+
+1. User selects role → `setRole()` + `setFieldCompleted(stage1)` → progress updates
+2. User fills Stage 2 fields → `setFormData()` + `setFieldCompleted(stage2)` → progress updates
+3. User submits Stage 2 → `setCompletedStage(stage2: true)` → redirects to Stage 3
+4. User fills Stage 3 → `setFieldCompleted(stage3)` → progress updates to 99%
+5. User submits → `setCompletedStage(stage3: true)` → redirects to Success
+6. Success page triggers `useEffect` → updates progress to 100%
+
+**Why Context API**:
+
+- Single source of truth for global state
+- Avoids prop drilling
+- Easy to reset all state on page reload
+- All components can subscribe to state changes
+
+### Validation Strategy
+
+**Three-Layer Validation**:
+
+1. **Field-Level Validation** (Real-time):
+   - Fires on every `onChange` event
+   - Updates `fieldCompleted` array immediately
+   - Progress bar updates in real-time
+   - Example: `handleSchool()` in Student.jsx
+
+   ```javascript
+   const handleSchool = (e) => {
+     setFormData({ ...formData, school: e.target.value });
+     setFieldCompleted((prev) => ({
+       ...prev,
+       stage2: [e.target.value.trim() ? true : false, prev.stage2[1]],
+     }));
+   };
+   ```
+
+2. **Form Submission Validation**:
+   - Triggered when user clicks "Next" button
+   - Validates all required fields
+   - Checks data type constraints
+   - Minimum length requirements (2+ characters)
+   - Shows error alerts for invalid data
+   - Prevents progression to next stage
+
+3. **Validation Rules by Stage**:
+
+   **Stage 1**: Role selection (radio/select input)
+   - Must select one of: student, teacher, professor
+   - Error: "Select a role to move forward"
+
+   **Stage 2**: Role-specific validation
+   - All fields required and non-empty
+   - Text fields: minimum 2 characters
+   - Student: Grade must be 1-12 (numeric)
+   - Teacher: Experience must be 0-40 (numeric, non-negative)
+   - Error messages guide user to fix field
+
+   **Stage 3**: Final validation
+   - Email: Valid regex pattern `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+   - Agreement: Checkbox must be checked
+   - Both required before submission
+   - Error: "Please enter a valid email and agree to the terms"
+
+### Hook Usage Reasoning
+
+**Why Hooks** (Functional Components):
+
+- **Modern React**: Hooks are the recommended approach in React 18+
+- **Simpler Logic**: No need for class lifecycle methods
+- **Code Reusability**: Custom hooks allow sharing logic
+- **Better Performance**: Automatic optimization with dependency arrays
+- **Cleaner Syntax**: Less boilerplate than class components
+
+**Hook Breakdown**:
+
+1. **`useState()`** - Manage component-level state
+   - Used in all stage components for form inputs and error messages
+   - Example: `const [error, setError] = useState('')`
+   - Why: Keeps state local to component, easier to manage form inputs
+
+2. **`useContext()`** - Access global state
+   - Used in all stages to access `StateManagerContext`
+   - Example: `const { role, setRole } = useContext(StateManagerContext)`
+   - Why: Connect components to global state without prop drilling
+
+3. **`useEffect()`** - Side effects and lifecycle
+   - **Auto-redirect on completion**: Redirects to next stage when current completes
+   - **Browser history protection**: Monitors `popstate` events on back button
+   - **Clean up**: Returns unsubscribe function to prevent memory leaks
+
+   ```javascript
+   useEffect(() => {
+     if (completedStage.stage1) {
+       navigate('/register/stage-2', { replace: true });
+     }
+   }, [completedStage.stage1, navigate]);
+   ```
+
+   - Why: Execute side effects when state changes, with proper cleanup
+
+4. **`useNavigate()`** - Client-side navigation
+   - Used in all stages for moving between routes
+   - Example: `navigate('/register/stage-2', { replace: true })`
+   - Why: Programmatic navigation without page reload, `replace: true` prevents back button access
+
+5. **`useRef()`** - Direct DOM access
+   - Used for form input focus management
+   - Example: `const selectRef = useRef()`
+   - Why: Focus on invalid inputs to improve UX, doesn't trigger re-render
+
+6. **`useNavigate()` in class component**:
+   - Stage 3 is a class component, uses hooks via wrapper function
+   - Wrapper injects `navigate` as prop to class component
+   - Why: Some libraries/patterns require class components, hooks bridge the gap
+
+### Difference Between Functional and Class Components
+
+**Functional Components** (Stages 1, 2, and role components):
+
+```javascript
+// Clean, modern syntax
+function Stage1() {
+  const [error, setError] = useState('');
+  useEffect(() => {
+    /* side effects */
+  }, [deps]);
+  return <JSX />;
+}
+```
+
+- **Advantages**:
+  - Hooks for state/lifecycle management
+  - Simpler syntax, less boilerplate
+  - Better performance optimization
+  - Easier to test
+  - Recommended modern approach
+
+- **Disadvantages**:
+  - Hooks have rules (only top-level, dependency arrays)
+  - Learning curve for beginners
+
+**Class Components** (Stage 3):
+
+```javascript
+class Stage3Component extends Component {
+  state = { email: '', agree: false };
+  componentDidMount() {
+    /* lifecycle */
+  }
+  render() {
+    return <JSX />;
+  }
+}
+```
+
+- **Why used for Stage 3**:
+  - Historical code (started with class component)
+  - Demonstrates both patterns in same app
+  - Works perfectly fine for this use case
+
+- **Advantages**:
+  - `componentDidMount`, `componentWillUnmount` for lifecycle
+  - `this.state` for state management
+  - Easier for developers from class-based languages
+
+- **Disadvantages**:
+  - More boilerplate code
+  - `this` context confusion
+  - Harder to reuse logic between components
+  - No hooks support
+
+**Why Both in This App**:
+
+- Functional components dominate modern React
+- Stage 3 class component shows both patterns work
+- Demonstrates interoperability between patterns
+
+### Stage Locking Logic
+
+**How Stages are Protected**:
+
+1. **Route-Level Protection** (`StageRouting.jsx`):
+
+   ```javascript
+   <Route
+     path="stage-2"
+     element={
+       completedStage.stage1 ? <Stage2 /> : <Navigate to="/register/stage-1" />
+     }
+   />
+   ```
+
+   - Before rendering component, checks if previous stage is completed
+   - If not completed, redirects to earliest incomplete stage
+   - Prevents URL manipulation to skip stages
+
+2. **Component-Level Protection** (Each stage component):
+
+   ```javascript
+   useEffect(() => {
+     if (completedStage.stage2) {
+       navigate('/register/stage-3', { replace: true });
+     }
+   }, [completedStage.stage2, navigate]);
+   ```
+
+   - When user attempts to re-access completed stage
+   - Auto-redirects to next stage
+   - `replace: true` removes from history
+
+3. **Browser History Protection** (Prevents back button):
+
+   ```javascript
+   useEffect(() => {
+     const handlePopState = (e) => {
+       if (completedStage.stage1) {
+         e.preventDefault();
+         navigate('/register/stage-1', { replace: true });
+       }
+     };
+     window.addEventListener('popstate', handlePopState);
+     return () => window.removeEventListener('popstate', handlePopState);
+   }, [completedStage.stage1, navigate]);
+   ```
+
+   - Monitors browser back button clicks (`popstate` event)
+   - If stage is completed and user tries to go back
+   - Redirects to Stage 1 instead of going back
+   - Cleanup function removes listener to prevent memory leaks
+
+4. **Data Persistence with Completion Status**:
+   - `completedStage` object persists in state
+   - Changing page or components resets state
+   - Browser page reload triggers `setProgress(100)` on success page
+   - Ensures stages remain locked even after refresh
+
+**Protection Sequence**:
+
+```
+User completes Stage 1
+  ↓
+navigate('/register/stage-2', { replace: true })
+  ↓
+Stage 2 renders
+  ↓
+User clicks browser back button
+  ↓
+popstate event fires
+  ↓
+Check: Is Stage 1 completed? YES
+  ↓
+navigate('/register/stage-1', { replace: true })
+  ↓
+User redirected to Stage 1 (remains in app flow)
+```
 
 ## 🚀 Installation and Setup
 
